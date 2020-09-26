@@ -1,0 +1,9 @@
+Core Dygraph library:
+https://dygraphs.com/2.1.0/dygraph.js
+https://dygraphs.com/2.1.0/dygraph.css
+- See LICENSE
+
+Hairlines plugin:
+https://github.com/danvk/dygraphs/
+master @ 07cae5dd0adbcee97689ffa6099a6b0e8665011b
+- See LICENSE
