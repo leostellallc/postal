@@ -1,0 +1,3 @@
+https://github.com/jcmellado/js-lzma
+master @ 3060ba8a5b5e6f4e7276d937b5e214979bf9f52b
+- See LICENSE
