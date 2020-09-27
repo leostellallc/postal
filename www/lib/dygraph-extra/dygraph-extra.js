@@ -27,7 +27,7 @@ Dygraph.Export = {};
 
 Dygraph.Export.DEFAULT_ATTRS = {
 
-    backgroundColor: "transparent",
+    backgroundColor: "#f0f0f0",
 
     //Texts displayed below the chart's x-axis and to the left of the y-axis 
     titleFont: "bold 18px serif",
@@ -321,15 +321,20 @@ Dygraph.Export.drawLegend = function (canvas, dygraph, options) {
     // Drop the first element, which is the label for the time dimension
     var labels = dygraph.attr_("labels").slice(1);
     
-    // 1. Compute the width of the labels:
-    var labelsWidth = 0;
+    // 1. Compute the width of the labels being plotted to the right:
+    var labelsY2Width = 0;
     
     var i;
     for (i = 0; i < labels.length; i++) {
-        labelsWidth = labelsWidth + ctx.measureText("- " + labels[i]).width + labelMargin;
+        var props = dygraph.getPropertiesForSeries(labels[i]);
+        if (props.axis == 1) {
+            continue;
+        }
+        labelsY2Width += 20 + ctx.measureText(" " + labels[i]).width + labelMargin;
     }
 
-    var labelsX = Math.floor((canvas.width - labelsWidth) / 2);
+    var labelsYX = 100;
+    var labelsY2X = canvas.width - labelsY2Width - 100;
     var labelsY = canvas.height - options.legendHeight + labelTopMargin;
 
 
@@ -342,14 +347,23 @@ Dygraph.Export.drawLegend = function (canvas, dygraph, options) {
     var usedColorCount=0;
     for (i = 0; i < labels.length; i++) {
         if (labelVisibility[i]) {
-            //TODO Replace the minus sign by a proper dash, although there is a
-            //     problem when the page encoding is different than the encoding 
-            //     of this file (UTF-8).
-            var txt = "- " + labels[i];
+            var X;
+            var txt = " " + labels[i];
+            var props = dygraph.getPropertiesForSeries(labels[i]);
+            if (props.axis == 1) {
+                X = labelsYX;
+                labelsYX += 20 + ctx.measureText(txt).width + labelMargin;
+            } else {
+                X = labelsY2X;
+                labelsY2X += 20 + ctx.measureText(txt).width + labelMargin;
+            }
+
             ctx.fillStyle = colors[usedColorCount];
             usedColorCount++
-            ctx.fillText(txt, labelsX, labelsY);
-            labelsX = labelsX + ctx.measureText(txt).width + labelMargin;
+            ctx.fillRect(X, labelsY, 20, 3);
+
+            ctx.fillStyle = "#000000";
+            ctx.fillText(txt, X + 20, labelsY);
         }
     }
 };
