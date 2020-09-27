@@ -407,7 +407,7 @@ module.exports = exports["default"];
  */
 
 /**
- * @fileoverview DataHandler implementation for the combination 
+ * @fileoverview DataHandler implementation for the combination
  * of error bars and fractions options.
  * @author David Eberlein (david.eberlein@ch.sauter-bc.com)
  */
@@ -527,7 +527,7 @@ module.exports = exports["default"];
  */
 
 /**
- * @fileoverview DataHandler base implementation for the "bar" 
+ * @fileoverview DataHandler base implementation for the "bar"
  * data formats. This implementation must be extended and the
  * extractSeries and rollingAverage must be implemented.
  * @author David Eberlein (david.eberlein@ch.sauter-bc.com)
@@ -564,13 +564,13 @@ BarsHandler.prototype = new _datahandler2['default']();
 //   (I get closure compiler errors if this isn't here.)
 /**
  * @override
- * @param {!Array.<Array>} rawData The raw data passed into dygraphs where 
+ * @param {!Array.<Array>} rawData The raw data passed into dygraphs where
  *     rawData[i] = [x,ySeries1,...,ySeriesN].
  * @param {!number} seriesIndex Index of the series to extract. All other
  *     series should be ignored.
  * @param {!DygraphOptions} options Dygraph options.
  * @return {Array.<[!number,?number,?]>} The series in the unified data format
- *     where series[i] = [x,y,{extras}]. 
+ *     where series[i] = [x,y,{extras}].
  */
 BarsHandler.prototype.extractSeries = function (rawData, seriesIndex, options) {
   // Not implemented here must be extended
@@ -578,7 +578,7 @@ BarsHandler.prototype.extractSeries = function (rawData, seriesIndex, options) {
 
 /**
  * @override
- * @param {!Array.<[!number,?number,?]>} series The series in the unified 
+ * @param {!Array.<[!number,?number,?]>} series The series in the unified
  *          data format where series[i] = [x,y,{extras}].
  * @param {!number} rollPeriod The number of points over which to average the data
  * @param {!DygraphOptions} options The dygraph options.
@@ -7175,8 +7175,21 @@ maxY = 1;span = 1;}}var maxAxisY=maxY,minAxisY=minY;if(ypadCompat){if(logscale){
 // close to zero.
 if(minAxisY < 0 && minY >= 0)minAxisY = 0;if(maxAxisY > 0 && maxY <= 0)maxAxisY = 0;}}axis.extremeRange = [minAxisY,maxAxisY];}if(axis.valueRange){ // This is a user-set value range for this axis.
 var y0=isNullUndefinedOrNaN(axis.valueRange[0])?axis.extremeRange[0]:axis.valueRange[0];var y1=isNullUndefinedOrNaN(axis.valueRange[1])?axis.extremeRange[1]:axis.valueRange[1];axis.computedValueRange = [y0,y1];}else {axis.computedValueRange = axis.extremeRange;}if(!ypadCompat){ // When using yRangePad, adjust the upper/lower bounds to add
-// padding unless the user has zoomed/panned the Y axis range.
-if(logscale){y0 = axis.computedValueRange[0];y1 = axis.computedValueRange[1];var y0pct=ypad / (2 * ypad - 1);var y1pct=(ypad - 1) / (2 * ypad - 1);axis.computedValueRange[0] = utils.logRangeFraction(y0,y1,y0pct);axis.computedValueRange[1] = utils.logRangeFraction(y0,y1,y1pct);}else {y0 = axis.computedValueRange[0];y1 = axis.computedValueRange[1];span = y1 - y0;axis.computedValueRange[0] = y0 - span * ypad;axis.computedValueRange[1] = y1 + span * ypad;}}if(independentTicks){axis.independentTicks = independentTicks;var opts=this.optionsViewForAxis_('y' + (i?'2':''));var ticker=opts('ticker');axis.ticks = ticker(axis.computedValueRange[0],axis.computedValueRange[1],this.plotter_.area.h,opts,this); // Define the first independent axis as primary axis.
+    // padding unless the user has zoomed/panned the Y axis range.
+      y0 = axis.computedValueRange[0];
+      y1 = axis.computedValueRange[1];
+
+      // special case #781: if we have no sense of scale, center on the sole value.
+      if (y0 === y1) {
+        if(y0 === 0) {
+          y1 = 1;
+        } else {
+          var delta = Math.abs(y0 / 10);
+          y0 -= delta;
+          y1 += delta;
+        }
+      }
+if(logscale){var y0pct=ypad / (2 * ypad - 1);var y1pct=(ypad - 1) / (2 * ypad - 1);axis.computedValueRange[0] = utils.logRangeFraction(y0,y1,y0pct);axis.computedValueRange[1] = utils.logRangeFraction(y0,y1,y1pct);}else {span = y1 - y0;axis.computedValueRange[0] = y0 - span * ypad;axis.computedValueRange[1] = y1 + span * ypad;}}if(independentTicks){axis.independentTicks = independentTicks;var opts=this.optionsViewForAxis_('y' + (i?'2':''));var ticker=opts('ticker');axis.ticks = ticker(axis.computedValueRange[0],axis.computedValueRange[1],this.plotter_.area.h,opts,this); // Define the first independent axis as primary axis.
 if(!p_axis)p_axis = axis;}}if(p_axis === undefined){throw "Configuration Error: At least one axis has to have the \"independentTicks\" option activated.";} // Add ticks. By default, all axes inherit the tick positions of the
 // primary axis. However, if an axis is specifically marked as having
 // independent ticks, then that is permissible as well.
