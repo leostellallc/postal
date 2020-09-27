@@ -1,0 +1,7 @@
+delete.png
+edit.png
+locked.png
+unlocked.png
+
+https://www.iconfinder.com/search/?iconset=freeapplication
+- See LICENSE
