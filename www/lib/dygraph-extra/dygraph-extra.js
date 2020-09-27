@@ -18,6 +18,11 @@
  * See: http://cavorite.com/labs/js/dygraphs-export/
  */
 
+/*
+ * Modified to work!
+ * https://stackoverflow.com/questions/43784534/dygraphs-export-image-createcanvas-is-not-a-function
+ */
+
 Dygraph.Export = {};
 
 Dygraph.Export.DEFAULT_ATTRS = {
@@ -82,6 +87,17 @@ Dygraph.Export.asPNG = function (dygraph, img, userOptions) {
     img.src = canvas.toDataURL();
 };
 
+Dygraph.Export.hack_update =  function(self, o) {
+  if (typeof(o) != 'undefined' && o !== null) {
+    for (var k in o) {
+      if (o.hasOwnProperty(k)) {
+        self[k] = o[k];
+      }
+    }
+  }
+  return self;
+};
+
 /**
  * Exports a dygraph into a single canvas object.
  *
@@ -93,11 +109,11 @@ Dygraph.Export.asPNG = function (dygraph, img, userOptions) {
  */
 Dygraph.Export.asCanvas = function (dygraph, userOptions) {
     "use strict";
-    var options = {}, 
-        canvas = Dygraph.createCanvas();
+    var options = {};
+    var canvas = document.createElement('canvas');
     
-    Dygraph.update(options, Dygraph.Export.DEFAULT_ATTRS);
-    Dygraph.update(options, userOptions);
+    Dygraph.Export.hack_update(options, Dygraph.Export.DEFAULT_ATTRS);
+    Dygraph.Export.hack_update(options, userOptions);
 
     canvas.width = dygraph.width_;
     canvas.height = dygraph.height_ + options.legendHeight;
