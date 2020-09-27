@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Postal</title>
+
+    <script type="text/javascript" src="config.js"></script>
+
+    <!-- Do not cache this page -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <link rel="stylesheet" href="postal.css" type="text/css">
+
+    <script type="text/javascript">
+      var g_user;
+      var g_admin;
+
+      function get_project_color(project)
+      {
+          // TODO: Centralize project configuration
+          return "#c0c0c0";
+      }
+
+      var result_offset = 0;
+      function load_results(result, base)
+      {
+          var table = document.getElementById("list");
+
+          for (var i = 0; i < result.length; i++) {
+              var tr = table.insertRow(1 + base + i);
+              var td = tr.insertCell(0);
+              td.innerHTML = "<center><a href='view.html?d=" + result[i].datasetId + "'>" +
+                  result[i].datasetId + "</a></center>";
+              td.style["width"] = "1px";
+              td.style["white-space"] = "nowrap";
+              td = tr.insertCell(1);
+              td.innerHTML = result[i].owner;
+              td.style["width"] = "1px";
+              td.style["white-space"] = "nowrap";
+              td = tr.insertCell(2);
+              description = result[i].description;
+              if (result[i].flags & 1) {
+                  description = "<abbr title=\"This dataset is restricted\">" + description + "</abbr>";
+                  td.style["background-color"] = "#ff8080";
+              } else if (result[i].project != "") {
+                  description = "<abbr title=\"Project: " + result[i].project + "\">" + description + "</abbr>";
+                  td.style["background-color"] = get_project_color(result[i].project);
+              }
+              td.innerHTML = description;
+              td.style["max-width"] = (document.width / 2) + "px";
+              td = tr.insertCell(3);
+              td.innerHTML = result[i].updated;
+              td.style["width"] = "1px";
+              td.style["white-space"] = "nowrap";
+              td = tr.insertCell(4);
+              td.innerHTML = "<center>" + result[i].size + "</center>";
+              td.style["width"] = "1px";
+              td.style["white-space"] = "nowrap";
+              td = tr.insertCell(5);
+              td.innerHTML = "";
+              td.innerHTML += "&#91;<a href='restart.html?d=" + result[i].datasetId +
+                  "'>restart</a>&#93;";
+              if (g_admin || (g_user != "guest" &&  result[i].owner == g_user)) {
+                  td.innerHTML += "&nbsp;&nbsp;&#91;<a href='edit.html?d=" + result[i].datasetId +
+                      "'>edit</a>&#93;";
+              }
+              td.style["width"] = "1px";
+              td.style["white-space"] = "nowrap";
+          }
+
+          result_offset += result.length;
+      }
+
+      function search()
+      {
+          var regex = document.getElementById("regex").value;
+
+          var request = new XMLHttpRequest();
+          request.open("GET", "cgi-bin/search.py?regex=" + regex, false);
+          request.send();
+
+          if (request.status == 200) {
+              var result = JSON.parse(request.responseText);
+              var table = document.getElementById("list");
+              while(table.rows.length > 1) {
+                  table.deleteRow(1);
+              }
+
+              result_offset = 0;
+              load_results(result, result_offset);
+          }
+      }
+
+      function more()
+      {
+          var regex = document.getElementById("regex").value;
+
+          var request = new XMLHttpRequest();
+          request.open("GET", "cgi-bin/search.py?regex=" + regex + "&start=" + result_offset, false);
+          request.send();
+
+          if (request.status == 200) {
+              var result = JSON.parse(request.responseText);
+
+              load_results(result, result_offset);
+          }
+      }
+
+      function keypress(event)
+      {
+          if (event.keyCode == '13') {
+              event.preventDefault();
+              search();
+          }
+      }
+
+      function logout()
+      {
+          var request = new XMLHttpRequest();
+          request.open("GET", "cgi-bin/get-user.py", true);
+          request.setRequestHeader("Authorization", "Basic logout");
+          request.send();
+          setTimeout(function () {
+              window.location.href = "index.html";
+          }, 200);
+      }
+    </script>
+  </head>
+
+  <body onload="search();">
+    <div class="search_bar" align="center">
+      <table border="0px">
+        <tr>
+          <td>
+            <div align="center">
+              <h2>Postal Home</h2>
+              <form>
+                <p><input type="text" id="regex" onkeypress="keypress(event);">
+                <input type="button" value="Search" onclick="search();"></p>
+                or <input type="button" value="Create New" onclick="window.location.href='new.html'";">
+                <p></p>
+                <p style="font-size:10px">did I mention that I have <a href="api/">an API</a>?
+                </p>
+              </form>
+            </div>
+          </td>
+          <td align="center">
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <img src="contents/logo.png" height="140px">
+            &nbsp;&nbsp;&nbsp;&nbsp;
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div class="datasets" align="center">
+      <table id="list" border="1px" style="border-collapse: collapse">
+        <tr>
+          <th>Dataset</th>
+          <th>Owner</th>
+          <th>Description</th>
+          <th>Last updated</th>
+          <th>Size (MB)</th>
+          <th></th>
+        </tr>
+      </table>
+      <p>
+        <form>
+          <input type="button" value="More results" onclick="more();">
+        </form>
+      </p>
+      <pre>
+        <div id="footer">
+        </div>
+      </pre>
+    </div>
+    <script type="text/javascript">
+      var footer = document.getElementById("footer");
+      footer.innerHTML = "";
+
+      var request = new XMLHttpRequest();
+      request.open("GET", "cgi-bin/get-user.py", false);
+      request.send();
+
+      if (request.status == 200) {
+          g_user = request.responseText;
+          footer.innerHTML += "Logged in as: " + g_user + "<br>";
+      }
+
+      request.open("GET", "cgi-bin/is-admin.py", false);
+      request.send();
+
+      if (request.status == 200) {
+          g_admin = request.responseText == "yes";
+      }
+
+      request.open("GET", "cgi-bin/get-version.py", false);
+      request.send();
+
+      if (request.status == 200) {
+          footer.innerHTML += "Version: " + request.responseText + "<br";
+      }
+    </script>
+    <div style="position:absolute; top:0; right:0;">
+      <input type="button" value="Log out" onclick="logout();"'>
+    </div>
+  </body>
+</html>

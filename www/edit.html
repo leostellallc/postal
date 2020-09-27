@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Postal: edit dataset</title>
+
+    <!-- Do not cache this page -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <script type="text/javascript" src="config.js"></script>
+
+    <!-- TODO: Test newer version of jQuery -->
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/smoothness/jquery-ui.css" type="text/css">
+    <link rel="stylesheet" href="postal.css" type="text/css">
+
+    <script type="text/javascript">
+      function getUrlParameter(name)
+      {
+          name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+          const regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+          const results = regex.exec(location.search);
+          return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+      }
+
+      function keypress(event)
+      {
+          if (event != null && event.keyCode == '13') {
+              event.preventDefault();
+          }
+
+          const description = document.getElementById("description").value;
+          const update = document.getElementById("update");
+          update.disabled = description == "";
+
+          const confirm = document.getElementById("confirm").value;
+          const trim = document.getElementById("trim");
+          const reset = document.getElementById("reset");
+          const del = document.getElementById("delete");
+          trim.disabled = reset.disabled = del.disabled = confirm != g_datasetId;
+          if (confirm != g_datasetId) {
+              $("#slider-range").slider("disable");
+          } else {
+              $("#slider-range").slider("enable");
+          }
+      }
+
+      function updateSlider(left, right)
+      {
+          const text_range = document.getElementById("text-range");
+          const date_left = new Date(parseFloat(left) * 1000);
+          const date_right = new Date(parseFloat(right) * 1000);
+          text_range.innerHTML = date_left.toISOString() + " - " + date_right.toISOString();
+      }
+
+      function updateDataset()
+      {
+          var project = document.getElementById("project");
+          project = project.options[project.selectedIndex].value;
+          const description = document.getElementById("description");
+
+          var request = new XMLHttpRequest();
+          request.open("GET", ("cgi-bin/edit.py" +
+                               "?d=" + g_datasetId +
+                               "&project=" + encodeURIComponent(project) +
+                               "&description=" + encodeURIComponent(description.value)),
+                       false);
+          request.send();
+
+          if (request.status != 200) {
+              alert("Operation failed: \n" + request.status);
+          }
+      }
+
+      function trimDataset()
+      {
+          const values = $("#slider-range").slider("values");
+
+          var request = new XMLHttpRequest();
+          request.open("GET", ("cgi-bin/trim.py" +
+                               "?d=" + g_datasetId +
+                               "&left=" + values[0] +
+                               "&right=" + values[1]), false);
+          request.send();
+
+          if (request.status == 200) {
+              const result = JSON.parse(request.responseText);
+              range = [result.left, result.right];
+              updateSlider(result.left, result.right);
+              $("#slider-range").slider("option", "min", result.left);
+              $("#slider-range").slider("option", "max", result.right);
+          } else {
+              alert("Operation failed: \n" + request.status);
+          }
+      }
+
+      function resetDataset()
+      {
+          const reply = prompt("This action is irreversible. Please type 'YES' to proceed:");
+          if (reply != "YES") {
+              return;
+          }
+
+          var request = new XMLHttpRequest();
+          request.open("GET", "cgi-bin/reset.py?d=" + g_datasetId + "&action=reset", false);
+          request.send();
+
+          if (request.status == 200) {
+              updateSlider(0, 0);
+              $("#slider-range").slider("option", "min", 0);
+              $("#slider-range").slider("option", "max", 0);
+          } else {
+              alert("Operation failed: \n" + request.status);
+          }
+      }
+
+      function deleteDataset()
+      {
+          const reply = prompt("This action is irreversible. Please type 'YES' to proceed:");
+          if (reply != "YES") {
+              return;
+          }
+
+          var request = new XMLHttpRequest();
+          request.open("GET", "cgi-bin/reset.py?d=" + g_datasetId + "&action=delete", false);
+          request.send();
+
+          if (request.status == 200) {
+              window.location.href = postal_url;
+          } else {
+              alert("Operation failed: \n" + request.status);
+          }
+      }
+    </script>
+  </head>
+
+  <body>
+    <div class="divcentered">
+      <form>
+        <div id="dataset" style="display: inline-block;"></div>
+        <p>Owner:</p>
+        <p><input type="text" id="owner" disabled></p>
+        <p>Project: <em>(this will restrict access only to certain users)</em></p>
+        <p>
+          <select id="project">
+            <option value="">-</option>
+            <!-- TODO: Centralize project configuration -->
+          </select>
+        </p>
+        <p>Description:</p>
+        <p><textarea id="description" rows="5" cols="80" oninput="keypress(null);"></textarea></p>
+        <p><input type="button" id="update" value="Update" onclick="updateDataset();"></p>
+        <hr>
+        <p>Enter the dataset ID to unlock the <font color='red'>destructive features</font> below:</p>
+        <p><input type="text" id="confirm" onkeyup="keypress(null);" onkeypress="keypress(event);"></p>
+        <p>Trim the contents of the dataset to the specified time range:</p>
+        <div id="slider-range"></div><div id="text-range">-</div>
+        <p><input type="button" id="trim" value="Trim" onclick="trimDataset();" disabled>&nbsp;
+          <font color='red'>This operation is irreversible</font>
+        </p>
+        <p>Delete all data/annotations from the dataset:</p>
+        <p><input type="button" id="reset" value="Reset" onclick="resetDataset();" disabled>&nbsp;
+          <font color='red'>This operation is irreversible</font>
+        </p>
+        <p>Delete the dataset entirely:</p>
+        <p><input type="button" id="delete" value="Delete" onclick="deleteDataset();" disabled>&nbsp;
+          <font color='red'>This operation is irreversible</font>
+        </p>
+      </form>
+    </div>
+    <div class="divcentered" id="output">
+    </div>
+    <script type="text/javascript">
+      function main()
+      {
+          const dataset = document.getElementById("dataset");
+          dataset.innerHTML = "Dataset: <a href='view.html?d=" + g_datasetId + "'>" +
+              g_datasetId + "</a>";
+
+          var request = new XMLHttpRequest();
+          request.open("GET", "cgi-bin/get-user.py", false);
+          request.send();
+
+          var user;
+          if (request.status == 200) {
+              user = request.responseText;
+          }
+
+          request.open("GET", "cgi-bin/is-admin.py", false);
+          request.send();
+
+          var admin;
+          if (request.status == 200) {
+              admin = request.responseText == "yes";
+          }
+
+          /*
+           * Populate the current values.
+           */
+          request.open("GET", "cgi-bin/edit.py?d=" + g_datasetId, false);
+          request.send();
+
+          if (request.status == 200) {
+              const result = JSON.parse(request.responseText);
+
+              const owner = document.getElementById("owner");
+              const project = document.getElementById("project");
+              const description = document.getElementById("description");
+
+              owner.value = result.owner;
+              for (var i = 0; i < project.options.length; i++) {
+                  const text = project.options[i].text.toLowerCase();
+
+                  if (result.project == text) {
+                      project.selectedIndex = i;
+                  }
+              }
+              description.value = result.description;
+
+              const update = document.getElementById("update");
+              const confirm = document.getElementById("confirm");
+              update.disabled = confirm.disabled = project.disabled = description.disabled =
+                  result.owner != user && !admin;
+          }
+
+          /*
+           * Create the trimming slider.
+           */
+          request.open("GET", "cgi-bin/trim.py?d=" + g_datasetId, false);
+          request.send();
+
+          var range;
+          if (request.status == 200) {
+              const result = JSON.parse(request.responseText);
+              range = [result.left, result.right];
+              updateSlider(result.left, result.right);
+          }
+
+          $("#slider-range").slider({
+              range: true,
+              disabled: true,
+              min: range[0],
+              max: range[1],
+              values: range,
+              slide: function(event, ui) {
+                  updateSlider(ui.values[0], ui.values[1]);
+              }
+          });
+      }
+
+      const g_datasetId = getUrlParameter("d");
+      main();
+    </script>
+  </body>
+</html>

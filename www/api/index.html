@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#postal-python-api">Postal Python API</a><ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#setting-up">Setting up</a></li>
+<li><a href="#command-line-tool">Command-line tool</a><ul>
+<li><a href="#importing-data">Importing data</a></li>
+<li><a href="#exporting-data">Exporting data</a></li>
+</ul></li>
+<li><a href="#usage-of-the-api">Usage of the API</a><ul>
+<li><a href="#opening-a-dataset">Opening a dataset</a></li>
+<li><a href="#accessing-data">Accessing data</a></li>
+<li><a href="#accessing-metadata">Accessing metadata</a></li>
+<li><a href="#creating-shareable-links">Creating shareable links</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<h1 id="postal-python-api">Postal Python API</h1>
+<h2 id="overview">Overview</h2>
+<p>The Python API for Postal allows manipulation of data recorded in Postal programmatically in Python.</p>
+<h2 id="setting-up">Setting up</h2>
+<ul>
+<li>Install the <code>postal</code> Python package:</li>
+</ul>
+<pre><code>$ cd python-lib
+$ sudo ./setup.py install</code></pre>
+<p>Authentication is required to access Postal. To remove username and/or password prompts, a configuration file can be used (<code>.postal</code> in ther user's home directory):</p>
+<pre><code>$ cat ~/.postal
+user = my.username
+password = my_secret_password</code></pre>
+<h2 id="command-line-tool">Command-line tool</h2>
+<p>In addition to the API for manipulating data, the <code>postal</code> package comes with a powerful command-line tool that allows importing and exporting of data.</p>
+<p>The tool is invoked as follows:</p>
+<pre><code>$ python3 -m postal
+usage: /usr/local/lib/python3.6/dist-packages/postal-2.0-py3.6.egg/postal/__main__.py &lt;command&gt; [&lt;args&gt;]
+
+Available commands are:
+   import     Import data into Postal
+   export     Export data from Postal
+__main__.py: error: the following arguments are required: command</code></pre>
+<h3 id="importing-data">Importing data</h3>
+<h4 id="supported-input">Supported input</h4>
+<p>When importing data, one or more of the following files can be passed to the command-line:</p>
+<ul>
+<li>Files with a <code>.csv</code> extension.</li>
+</ul>
+<h4 id="creating-a-dataset">Creating a dataset</h4>
+<p>The <code>-C</code> command-line option request to create a new dataset to import the data. The description for the dataset can be specified, along with a user name (defaults to the current login).</p>
+<p>Here is an example of simple syntax:</p>
+<pre><code>$ python3 -m postal import -C &#39;Test data #1&#39; test_data.csv</code></pre>
+<p>A project name can be specified in order to restrict access, this can be done with the <code>-p</code> option:</p>
+<pre><code>$ python3 -m postal import -C &#39;Restricted test data&#39; -p secret-project test_data.csv</code></pre>
+<p>A message is output to report the unique identifier of the dataset that was created:</p>
+<pre><code>Created dataset 1001...</code></pre>
+<h4 id="importing-to-an-existing-dataset">Importing to an existing dataset</h4>
+<p>To import data to an existing dataset, the dataset must be actively recording. This is typically the case right after creation from the Postal web interface. If the dataset is not actively recording, the &quot;restart&quot; link must be clicked from the homepage. In both cases, a recording dataset is identified by a TCP port as reported when creating or restarting the dataset:</p>
+<blockquote>
+<div class="figure">
+<img src="../contents/help/tcp-port.png" />
+
+</div>
+</blockquote>
+<p>This TCP port number can be passed to the <code>-c</code> option of the command-line utility.</p>
+<pre><code>$ python3 -m postal import -c localhost:50783 test_data.csv</code></pre>
+<h3 id="exporting-data">Exporting data</h3>
+<p>The command-line tool can be used to export selected data from a dataset into a Comma Separated Values (CSV) file that can be imported into other tools (such as Excel).</p>
+<p>The data to export can be selected by specifying a time interval and a list of metrics to export.</p>
+<p>The example below exports a subset of data from dataset 1001 into the file <code>export.csv</code>. The subset of data is specified by time (the timestamps are epoch timestamps, see <a href="https://www.epochconverter.com/">Epoch Converter</a>), and all metrics with a name matching the Unix shell-style wildcards <code>test.*</code> (see <a href="https://docs.python.org/3/library/fnmatch.html">Fnmatch</a>).</p>
+<pre><code>$ python3 -m postal export --start-time 1573507978 --end-time 1573507991 1001 export.csv test.*</code></pre>
+<p>Additionally, the <code>-t</code> option can be used to translate enumeration values into strings. The <code>-f</code> option can be used to filter on validity. See further below how these options behavior with the API.</p>
+<h2 id="usage-of-the-api">Usage of the API</h2>
+<h3 id="opening-a-dataset">Opening a dataset</h3>
+<p>To open a dataset, use the <code>PostalRun</code> object:</p>
+<pre><code>import postal
+run = postal.PostalRun(1001)</code></pre>
+<p>It is possible to specify a window of time by using the <code>start_time</code> and <code>end_time</code> optional arguments, passing an epoch timestamp to only access of subset of data from the dataset.</p>
+<h3 id="accessing-data">Accessing data</h3>
+<h4 id="simple-time-series">Simple time series</h4>
+<p>The simplest way to access data is by fetching a time series for a given metric:</p>
+<pre><code>MSFT_stock = run[&#39;MSFT&#39;]</code></pre>
+<p>A time series is represented as a <code>list</code> of tuples, with the first element of each tuple the epoch timestamp for the data, and the second element the value for the metric.</p>
+<pre><code>&gt;&gt;&gt; MSFT_stock[:3]
+[(946684800.0, 39.81), (949363200.0, 36.35), (951868800.0, 43.22)]</code></pre>
+<h4 id="using-data-frames">Using data frames</h4>
+<p>Time series as described above are convenient for inspecting every single value for a given metric. However, when manipulating several metrics at once, it is sometimes a problem to iterate over all metrics when some of them have gaps.</p>
+<p>The data frames (see <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html">pandas</a>) consolidate multiple time series into an iteratable matrix, padding missing entries as desired.</p>
+<pre><code>&gt;&gt;&gt; df=postal.DataFrame(run, [&#39;MSFT&#39;, &#39;AAPL&#39;])
+&gt;&gt;&gt; df
+               MSFT    AAPL
+9.466848e+08  39.81   25.94
+9.493632e+08  36.35     NaN
+9.518688e+08  43.22     NaN
+9.545472e+08  28.37     NaN
+9.571392e+08  25.45   21.00
+...             ...     ...
+1.257034e+09  29.27  199.91
+1.259626e+09  30.34  210.73
+1.262304e+09  28.05  192.06
+1.264982e+09  28.67  204.62
+1.267402e+09  28.80  223.02
+
+[123 rows x 2 columns]</code></pre>
+<p>By default, values not available are padded with NaN, however this can be changed by using the <code>fillna()</code> method (see <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.fillna.html#pandas.DataFrame.fillna"><code>pandas.DataFrame.fillna</code></a>. In the example below, unavailable entries are &quot;forward-filled&quot; (repeating the last known good value):</p>
+<pre><code>&gt;&gt;&gt; df.fillna(method=&#39;ffill&#39;)
+               MSFT    AAPL
+9.466848e+08  39.81   25.94
+9.493632e+08  36.35   25.94
+9.518688e+08  43.22   25.94
+9.545472e+08  28.37   25.94
+9.571392e+08  25.45   21.00
+...             ...     ...
+1.257034e+09  29.27  199.91
+1.259626e+09  30.34  210.73
+1.262304e+09  28.05  192.06
+1.264982e+09  28.67  204.62
+1.267402e+09  28.80  223.02
+
+[123 rows x 2 columns]</code></pre>
+<p>There are several ways to iterate over a data frame. Here is a simple example:</p>
+<pre><code>for row in df.itertuples():
+    row = row._asdict()
+    print(row[&#39;Index&#39;], row[&#39;MSFT&#39;], row[&#39;AAPL&#39;])</code></pre>
+<h4 id="translation-of-enumerations">Translation of enumerations</h4>
+<p>To enable translation of enumerations to strings for all subsequent fetching of data, the <code>set_translate()</code> method can be used.</p>
+<pre><code>state_raw = run[&#39;state&#39;]
+run.set_translate(True)
+state_translated = run[&#39;state&#39;]</code></pre>
+<p>As shown in the example, any time series fetched prior to calling the <code>set_translate()</code> method remains unchanged, but any time series fetched after the call will not contain translated values:</p>
+<pre><code>&gt;&gt;&gt; state_raw[:3]
+[(1589247723.2368002, 0), (1589247724.236901, 1), (1589247725.2367606, 2)]
+&gt;&gt;&gt; state_translated[:3]
+[(1589247723.2368002, &#39;Off&#39;), (1589247724.236901, &#39;Starting&#39;), (1589247725.2367606, &#39;Started&#39;)]</code></pre>
+<p>There is also a method to retrieve the translations for a given metric:</p>
+<pre><code>&gt;&gt;&gt; run.get_translation(&#39;state&#39;)
+[&#39;Off&#39;, &#39;Starting&#39;, &#39;Started&#39;]</code></pre>
+<h4 id="filtering-based-on-validity">Filtering based on validity</h4>
+<p>To enable filtering on validity for all subsequent fetching of data, the <code>set_filter()</code> method can be used. Similarly to the tranlation of enumerations described above, the previously fetched series are unchanged, and only the newly fetched series are properly filtered.</p>
+<p>The filtering that is applied remove all values for which the corresponding validity metric is not 0.</p>
+<p>There is also a method to retrieve the validity metric corresponding to a given metric:</p>
+<pre><code>&gt;&gt;&gt; run.get_validity_key(&#39;testValue&#39;)
+&#39;testValueValid&#39;</code></pre>
+<h3 id="accessing-metadata">Accessing metadata</h3>
+<p>Metadata and annotations are made available through the <code>PostalRun</code> object with the following properties:</p>
+<ul>
+<li><code>columns</code> list all available metrics for the dataset;</li>
+<li><code>metadata</code> contains the raw metadata dictionary, containing enum translation and validity map. Note that is is prefered to use the <code>get_translation()</code> and <code>get_validity_key()</code> method instead of using the dictionary directly;</li>
+<li><code>annotations</code> contains the annotations dictionary, indexed by timestamp.</li>
+</ul>
+<h3 id="creating-shareable-links">Creating shareable links</h3>
+<p>It is possible to programmatically create direct links (share links) to a Postal plot. The <code>get_sharelink()</code> takes a dictionary with the following 3 entries (unused entries do not have to be specified):</p>
+<ul>
+<li><code>left</code>: specify a list of metrics to plot of the leftmost Y axis;</li>
+<li><code>right</code>: specify a list of metrics to plot of the rightmost Y axis;</li>
+<li><code>window</code>: specify a pair of epoch timestamps to select the period of data to plot.</li>
+</ul>
+<p>Example:</p>
+<pre><code>&gt;&gt;&gt; run.get_sharelink({&#39;left&#39;: [&#39;MSFT&#39;, &#39;GOOG&#39;], &#39;right&#39;: [&#39;Dow&#39;]})
+&#39;http://postal.domain.com/view.html?s=9c9e2d38823d4d939357d0c5dcada299&#39;</code></pre>
+</body>
+</html>

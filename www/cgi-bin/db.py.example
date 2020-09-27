@@ -1,0 +1,4 @@
+HOST = 'localhost'
+USER = 'postal'
+PASSWORD = 'password'
+DB = 'postal'

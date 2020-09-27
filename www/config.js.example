@@ -1,0 +1,2 @@
+const postal_host = "localhost";
+const postal_url = "http://" + postal_host;

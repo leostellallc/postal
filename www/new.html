@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Postal: new dataset</title>
+
+    <!-- Do not cache this page -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <script type="text/javascript" src="config.js"></script>
+
+    <link rel="stylesheet" href="postal.css" type="text/css">
+
+    <script type="text/javascript">
+      var created = false;
+
+      function create()
+      {
+          var project = document.getElementById("project");
+          project = project.options[project.selectedIndex].value;
+          var description = document.getElementById("description").value;
+
+          var url = "cgi-bin/new.py";
+          url += "?project=" + encodeURIComponent(project);
+          url += "&description=" + encodeURIComponent(description);
+
+          var request = new XMLHttpRequest();
+          request.open("GET", url, false);
+
+          var output = document.getElementById("output");
+          var button = document.getElementById("button");
+
+          output.innerHTML = "Working on it... Please be patient.";
+          button.disabled = true;
+
+          request.send();
+
+          if (request.status == 200) {
+              var result = JSON.parse(request.responseText);
+
+              var datasetId = result.datasetId;
+              var port = result.port;
+
+              output.innerHTML =
+                  "<p>Your dataset: <a href='view.html?d=" + datasetId + "'>" + datasetId + "</a></p>";
+
+              if (port != null) {
+                  output.innerHTML += "<p>Your TCP port: " + port + "</p>";
+                  output.innerHTML += "<p>This port will close after 15 minutes of inactivity</p>";
+                  output.innerHTML += "<p><b>To push data into this dataset from file:</b></p>";
+                  output.innerHTML += "<code>socat -u file:&lt;my log file&gt; tcp:" + postal_host + ":" + port + "</code>";
+                  output.innerHTML += "<p>Or using the Postal package if available:</p>";
+                  output.innerHTML += "<code>python3 -m postal import -c " + postal_host + ":" + port + " &lt;my log files&gt;</code>";
+                  created = true;
+              } else {
+                  output.innerHTML += "<p>Oops, something went wrong:</p><code>" +
+                      result.error.replace(/\n/g, "<br>") + "</code>";
+                  button.disabled = false;
+              }
+          } else {
+              output.innerHTML = "Failed";
+              button.disabled = false;
+          }
+      }
+
+      function keypress(event)
+      {
+          if (event != null && event.keyCode == '13') {
+              event.preventDefault();
+          }
+
+          var description = document.getElementById("description").value;
+
+          var button = document.getElementById("button");
+          button.disabled = created || description == "";
+      }
+    </script>
+  </head>
+
+  <body>
+    <div class="divcentered">
+      <form>
+        <p>Owner:</p>
+        <p><input type="text" id="owner" disabled></p>
+        <p>Project: <em>(this will restrict access only to certain users)</em></p>
+        <p>
+          <select id="project">
+            <option value="">-</option>
+            <!-- TODO: Centralize project configuration -->
+          </select>
+        </p>
+        <p>Description:</p>
+        <p><textarea id="description" rows="5" cols="80" oninput="keypress(null);"></textarea></p>
+        <p><input type="button" id="button" value="Create" onclick="create();" disabled></p>
+      </form>
+    </div>
+    <div class="divcentered" id="output">
+    </div>
+    <script type="text/javascript">
+      var request = new XMLHttpRequest();
+      request.open("GET", "cgi-bin/get-user.py", false);
+      request.send();
+
+      if (request.status == 200) {
+          var owner = document.getElementById("owner");
+          owner.value = request.responseText;
+      }
+    </script>
+  </body>
+</html>

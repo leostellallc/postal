@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Postal: restart logger</title>
+
+    <!-- Do not cache this page -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <script type="text/javascript" src="config.js"></script>
+
+    <link rel="stylesheet" href="postal.css" type="text/css">
+
+    <script type="text/javascript">
+      function getUrlParameter(name)
+      {
+          name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+          const regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+          const results = regex.exec(location.search);
+          return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+      }
+
+      function restart()
+      {
+          const datasetId = getUrlParameter("d");
+          const force = getUrlParameter("force");
+          var url = "cgi-bin/restart.py";
+          url += "?d=" + encodeURIComponent(datasetId);
+          if (force != null) {
+              url += "&force=" + force;
+          }
+
+          var request = new XMLHttpRequest();
+          request.open("GET", url, false);
+
+          var output = document.getElementById("output");
+
+          output.innerHTML = "Working on it... Please be patient.";
+
+          request.send();
+
+          if (request.status == 200) {
+              var result = JSON.parse(request.responseText);
+
+              var port = result.port;
+
+              output.innerHTML =
+                  "<p>Your dataset: <a href='view.html?d=" + datasetId + "'>" + datasetId + "</a></p>";
+
+              if (port != null) {
+                  // TODO: De-duplicate the message with new.html
+                  output.innerHTML += "<p>Your TCP port: " + port +
+                      " <a href='restart.html?d=" + encodeURIComponent(datasetId) +
+                      "&force=1'>(force refresh)</a></p>";
+                  output.innerHTML += "<p>This port will close after 15 minutes of inactivity</p>";
+                  output.innerHTML += "<p><strong><b>To push data into this dataset from file:</b></p>";
+                  output.innerHTML += "<code>socat -u file:&lt;my log file&gt; tcp:" + postal_host + ":" + port + "</code>";
+                  output.innerHTML += "<p>Or using the Postal package if available:</p>";
+                  output.innerHTML += "<code>python3 -m postal import -c " + postal_host + ":" + port + " &lt;my log files&gt;</code>";
+              } else {
+                  output.innerHTML += "<p>Oops, something went wrong:</p><code>" +
+                      result.error.replace(/\n/g, "<br>") + "</code>";
+              }
+          } else {
+              output.innerHTML = "Failed";
+          }
+      }
+    </script>
+  </head>
+
+  <body onload="restart();">
+    <div class="divcentered" id="output">
+    </div>
+  </body>
+</html>

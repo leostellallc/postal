@@ -1,0 +1,5 @@
+GROUPS = {
+    'user1': ['project1', 'project2'],
+    'user2': ['project2'],
+    'admin': ['admin'],
+}

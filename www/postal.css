@@ -1,0 +1,171 @@
+body {
+    font-family: "Tahoma";
+}
+
+.search_bar {
+    position: fixed;
+
+    left: 0;
+    width: 100%;
+
+    top: 0;
+    height: 160px;
+}
+
+.datasets {
+    position: fixed;
+
+    left: 0;
+    width: 100%;
+
+    top: 20%;
+    height: 80%;
+
+    overflow-y: scroll;
+}
+
+tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f0f0f0;
+}
+
+th, td {
+    padding: 5px;
+    text-align: left;
+}
+
+.divcentered {
+    margin: auto;
+    width: 50%;
+}
+
+.split {
+    position: fixed;
+
+    overflow-x: hidden;
+}
+
+.left {
+    left: 0;
+    width: 260px;
+
+    top: 0;
+    padding-top: 5px;
+    height: calc(100% - 5px);
+
+    overflow-y: scrollbar;
+}
+
+.right {
+    right: 0;
+    width: calc(100% - 260px);
+
+    top: 0;
+    height: 100%;
+
+    overflow-y: hidden;
+
+    background-color: #f0f0f0;
+}
+
+.select_element {
+    font-size: 11px;
+}
+
+.menu {
+    margin-right: 10px;
+    width: calc(100% - 260px);
+
+    height: 24px;
+
+    overflow-y: hidden;
+
+    background-color: #c0c0c0;
+}
+
+.graph {
+    position: relative;
+
+    top: 20px;
+    padding-top: 5px;
+    height: calc(100% - 30px - 5px);
+}
+
+.checkbox {
+    margin: 0;
+    padding: 0;
+}
+
+/*
+ * Override some of dygraph's styles.
+ */
+.dygraph-legend {
+    background-color: rgba(255, 255, 255, 0) !important;
+    width: 300px !important;
+    font-size: 12px !important;
+}
+
+.hairline-info {
+    border: 1px solid black;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+
+    display: table;
+
+    z-index: 100;
+    padding: 3px;
+    background: white;
+    font-size: 11px;
+    cursor: move;
+}
+
+#cover-spin {
+    position:fixed;
+    width:100%;
+    left:0;right:0;top:0;bottom:0;
+    background-color: rgba(255,255,255,0.7);
+    z-index:9999;
+    display:none;
+}
+
+@-webkit-keyframes spin {
+	from {-webkit-transform:rotate(0deg);}
+	to {-webkit-transform:rotate(360deg);}
+}
+
+@keyframes spin {
+	from {transform:rotate(0deg);}
+	to {transform:rotate(360deg);}
+}
+
+#cover-spin::after {
+    content:'';
+    display:block;
+    position:absolute;
+    left:48%;top:40%;
+    width:40px;height:40px;
+    border-style:solid;
+    border-color:black;
+    border-top-color:transparent;
+    border-width: 4px;
+    border-radius:50%;
+    -webkit-animation: spin .8s linear infinite;
+    animation: spin .8s linear infinite;
+}
+
+abbr {
+    text-decoration: none !important;
+    border-bottom: 0px !important;
+}
+
+.unselectable {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
