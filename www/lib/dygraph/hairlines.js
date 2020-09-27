@@ -54,8 +54,6 @@ hairlines.prototype.activate = function(g) {
 
   return {
     didDrawChart: this.didDrawChart,
-    click: this.click,
-    dblclick: this.dblclick,
     dataDidUpdate: this.dataDidUpdate
   };
 };
@@ -76,12 +74,12 @@ hairlines.prototype.hairlineWasDragged = function(h, event, ui) {
   h.xval = this.dygraph_.toDataXCoord(ui.position.left);
   this.moveHairlineToTop(h);
   this.updateHairlineDivPositions();
-  this.updateHairlineInfo();
   this.updateHairlineStyles();
   $(this).triggerHandler('hairlineMoved', {
     oldXVal: oldXVal,
     newXVal: h.xval
   });
+  this.updateHairlineInfo();
   $(this).triggerHandler('hairlinesChanged', {});
 };
 
@@ -114,7 +112,7 @@ hairlines.prototype.createHairline = function(props) {
     .show();
 
   // Surely there's a more jQuery-ish way to do this!
-  $([$infoDiv.get(0), $lineContainerDiv.get(0)])
+  $([$infoDiv.get(0)])
     .draggable({
       'axis': 'x',
       'drag': function(event, ui) {
@@ -241,7 +239,7 @@ hairlines.prototype.updateHairlineInfo = function() {
           canvasx: 1,  // TODO(danvk): real coordinate
           canvasy: 1,  // TODO(danvk): real coordinate
           xval: h.xval,
-          yval: g.getValue(row, i),
+          yval: 0,
           name: labels[i]
         });
       }
